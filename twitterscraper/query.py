@@ -87,7 +87,7 @@ def query_single_page(query, lang, pos, retry=50, from_user=False, timeout=60):
     logger.info('Scraping tweets from {}'.format(url))
 
     try:
-        proxy = next(proxy_pool)
+        proxy = random.choice(proxies)
         logger.info('Using proxy {}'.format(proxy))
         response = requests.get(url, headers=HEADER, proxies={"http": proxy})
         if pos is None:  # html response
