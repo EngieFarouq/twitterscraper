@@ -48,9 +48,10 @@ def get_proxies():
     list_td = list(filter(None, list_td))
     list_ip = [elem[0].text for elem in list_td]
     list_ports = [elem[1].text for elem in list_td]
-    list_proxies = [':'.join(elem) for elem in list(zip(list_ip, list_ports))]
-    return list_proxies               
-                  
+    list_types = [elem[4].text for elem in list_td]
+    list_proxies = [':'.join(elem) for i,elem in enumerate(zip(list_ip, list_ports)) if list_types[i] != "transparent"]
+    return list_proxies
+
 def get_query_url(query, lang, pos, from_user = False):
     if from_user:
         if pos is None:
