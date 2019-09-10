@@ -49,7 +49,8 @@ def get_proxies():
     list_ip = [elem[0].text for elem in list_td]
     list_ports = [elem[1].text for elem in list_td]
     list_types = [elem[4].text for elem in list_td]
-    list_proxies = [':'.join(elem) for i,elem in enumerate(zip(list_ip, list_ports)) if list_types[i] != "transparent"]
+    list_https = [elem[6].text for elem in list_td]
+    list_proxies = [':'.join(elem) for i,elem in enumerate(zip(list_ip, list_ports)) if list_types[i] != "transparent" and list_https[i] == "yes"]
     return list_proxies
 
 def get_query_url(query, lang, pos, from_user = False):
@@ -90,7 +91,7 @@ def query_single_page(query, lang, pos, retry=50, from_user=False, timeout=60):
     try:
         proxy = random.choice(proxies)
         logger.info('Using proxy {}'.format(proxy))
-        response = requests.get(url, headers=HEADER, proxies={"http": proxy})
+        response = requests.get(url, headers=HEADER, proxies={"https": proxy})
         if pos is None:  # html response
             html = response.text or ''
             json_resp = None
@@ -287,7 +288,7 @@ def query_user_page(url, retry=10, timeout=60):
     try:
         proxy = next(proxy_pool)
         logger.info('Using proxy {}'.format(proxy))
-        response = requests.get(url, headers=HEADER, proxies={"http": proxy})
+        response = requests.get(url, headers=HEADER, proxies={"https": proxy})
         html = response.text or ''
 
         user_info = User.from_html(html)
