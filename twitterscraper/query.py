@@ -75,7 +75,7 @@ def linspace(start, stop, n):
 proxies = get_proxies()
 proxy_pool = cycle(proxies)
 
-def query_single_page(query, lang, pos, retry=50, from_user=False, timeout=60):
+def query_single_page(query, lang, pos, retry=50, from_user=False, timeout=(6.05,30)):
     """
     Returns tweets from the given URL.
 
@@ -91,7 +91,7 @@ def query_single_page(query, lang, pos, retry=50, from_user=False, timeout=60):
     try:
         proxy = random.choice(proxies)
         logger.info('Using proxy {}'.format(proxy))
-        response = requests.get(url, headers=HEADER, proxies={"https": proxy})
+        response = requests.get(url, headers=HEADER, proxies={"https": proxy},timeout=timeout)
         if pos is None:  # html response
             html = response.text or ''
             json_resp = None
@@ -276,7 +276,7 @@ def query_tweets_from_user(user, limit=None):
     return tweets
 
 
-def query_user_page(url, retry=10, timeout=60):
+def query_user_page(url, retry=10, timeout=(6.05,30)):
     """
     Returns the scraped user data from a twitter user page.
 
@@ -288,7 +288,7 @@ def query_user_page(url, retry=10, timeout=60):
     try:
         proxy = next(proxy_pool)
         logger.info('Using proxy {}'.format(proxy))
-        response = requests.get(url, headers=HEADER, proxies={"https": proxy})
+        response = requests.get(url, headers=HEADER, proxies={"https": proxy},timeout=timeout)
         html = response.text or ''
 
         user_info = User.from_html(html)
