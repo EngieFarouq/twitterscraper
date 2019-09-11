@@ -75,7 +75,7 @@ def linspace(start, stop, n):
 proxies = get_proxies()
 proxy_pool = cycle(proxies)
 
-def query_single_page(query, lang, pos, retry=50, from_user=False, timeout=(6.05,30)):
+def query_single_page(query, lang, pos, use_proxies, retry=50, from_user=False, timeout=(6.05,30)):
     """
     Returns tweets from the given URL.
 
@@ -89,9 +89,13 @@ def query_single_page(query, lang, pos, retry=50, from_user=False, timeout=(6.05
     logger.info('Scraping tweets from {}'.format(url))
 
     try:
-        proxy = random.choice(proxies)
-        logger.info('Using proxy {}'.format(proxy))
-        response = requests.get(url, headers=HEADER, proxies={"https": proxy},timeout=timeout)
+        if use_proxies:
+                proxy = random.choice(proxies)
+                logger.info('Using proxy {}'.format(proxy))
+                proxy_config = {"https":proxy}
+        else:
+                proxy_config = {}
+        response = requests.get(url, headers=HEADER, proxies=proxy_config,timeout=timeout)
         if pos is None:  # html response
             html = response.text or ''
             json_resp = None
@@ -150,7 +154,7 @@ def query_single_page(query, lang, pos, retry=50, from_user=False, timeout=(6.05
     return [], None
 
 
-def query_tweets_once_generator(query, limit=None, lang='', pos=None):
+def query_tweets_once_generator(query, use_proxies, limit=None, lang='', pos=None):
     """
     Queries twitter for all the tweets you want! It will load all pages it gets
     from twitter. However, twitter might out of a sudden stop serving new pages,
@@ -172,7 +176,7 @@ def query_tweets_once_generator(query, limit=None, lang='', pos=None):
     num_tweets = 0
     try:
         while True:
-            new_tweets, new_pos = query_single_page(query, lang, pos)
+            new_tweets, new_pos = query_single_page(query, lang, pos, use_proxies = use_proxies)
             if len(new_tweets) == 0:
                 logger.info('Got {} tweets for {}.'.format(
                     num_tweets, query))
@@ -210,7 +214,7 @@ def query_tweets_once(*args, **kwargs):
         return []
 
 
-def query_tweets(query, limit=None, begindate=dt.date(2006, 3, 21), enddate=dt.date.today(), poolsize=20, lang=''):
+def query_tweets(query, limit=None, begindate=dt.date(2006, 3, 21), enddate=dt.date.today(), poolsize=20, lang='', use_proxies = False):
     no_days = (enddate - begindate).days
     
     if(no_days < 0):
@@ -235,7 +239,7 @@ def query_tweets(query, limit=None, begindate=dt.date(2006, 3, 21), enddate=dt.d
         pool = Pool(poolsize)
         logger.info('queries: {}'.format(queries))
         try:
-            for new_tweets in pool.imap_unordered(partial(query_tweets_once, limit=limit_per_pool, lang=lang), queries):
+            for new_tweets in pool.imap_unordered(partial(query_tweets_once, limit=limit_per_pool, lang=lang, use_proxies=use_proxies), queries):
                 all_tweets.extend(new_tweets)
                 logger.info('Got {} tweets ({} new).'.format(
                     len(all_tweets), len(new_tweets)))
@@ -249,12 +253,12 @@ def query_tweets(query, limit=None, begindate=dt.date(2006, 3, 21), enddate=dt.d
     return all_tweets
 
 
-def query_tweets_from_user(user, limit=None):
+def query_tweets_from_user(user, limit=None, use_proxies = False):
     pos = None
     tweets = []
     try:
         while True:
-           new_tweets, pos = query_single_page(user, lang='', pos=pos, from_user=True)
+           new_tweets, pos = query_single_page(user, lang='', pos=pos, from_user=True, use_proxies = use_proxies)
            if len(new_tweets) == 0:
                logger.info("Got {} tweets from username {}".format(len(tweets), user))
                return tweets
@@ -276,7 +280,7 @@ def query_tweets_from_user(user, limit=None):
     return tweets
 
 
-def query_user_page(url, retry=10, timeout=(6.05,30)):
+def query_user_page(url, use_proxies, retry=10, timeout=(6.05,30)):
     """
     Returns the scraped user data from a twitter user page.
 
@@ -286,9 +290,13 @@ def query_user_page(url, retry=10, timeout=(6.05,30)):
     """
 
     try:
-        proxy = next(proxy_pool)
-        logger.info('Using proxy {}'.format(proxy))
-        response = requests.get(url, headers=HEADER, proxies={"https": proxy},timeout=timeout)
+        if use_proxies:
+                proxy = random.choice(proxies)
+                logger.info('Using proxy {}'.format(proxy))
+                proxy_config = {"https":proxy}
+        else:
+                proxy_config = None
+        response = requests.get(url, headers=HEADER, proxies=proxy_config,timeout=timeout)
         html = response.text or ''
 
         user_info = User.from_html(html)

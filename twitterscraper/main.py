@@ -79,6 +79,8 @@ def main():
                                  "zh-cn (Chinese Simplified)\n"
                                  "zh-tw (Chinese Traditional)"
                                  )
+        parser.add_argument("--useproxies",action="store_true",
+                           help="Set this flag if you want to retrieve Tweets through anonymous proxies.")
         parser.add_argument("-d", "--dump", action="store_true",
                             help="Set this flag if you want to dump the tweets \nto the console rather than outputting to a file")
         parser.add_argument("-ow", "--overwrite", action="store_true",
@@ -100,11 +102,12 @@ def main():
             args.begindate = dt.date(2006,3,1)
 
         if args.user:
-            tweets = query_tweets_from_user(user = args.query, limit = args.limit)
+            tweets = query_tweets_from_user(user = args.query, limit = args.limit, use_proxies = args.useproxies)
         else:
             tweets = query_tweets(query = args.query, limit = args.limit,
                               begindate = args.begindate, enddate = args.enddate,
-                              poolsize = args.poolsize, lang = args.lang)
+                              poolsize = args.poolsize, lang = args.lang,
+                              use_proxies = args.useproxies)
 
         if args.dump:
             print(json.dumps(tweets, cls=JSONEncoder))
