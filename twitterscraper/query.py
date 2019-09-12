@@ -5,6 +5,7 @@ import requests
 import urllib
 import random
 import datetime as dt
+import time
 
 from functools import partial
 from billiard.pool import Pool
@@ -154,7 +155,7 @@ def query_single_page(query, lang, pos, use_proxies, retry=50, from_user=False, 
     return [], None
 
 
-def query_tweets_once_generator(query, use_proxies, limit=None, lang='', pos=None):
+def query_tweets_once_generator(query, use_proxies, limit=None, lang='', pos=None, throttled = False):
     """
     Queries twitter for all the tweets you want! It will load all pages it gets
     from twitter. However, twitter might out of a sudden stop serving new pages,
@@ -184,6 +185,15 @@ def query_tweets_once_generator(query, use_proxies, limit=None, lang='', pos=Non
 
             for t in new_tweets:
                 yield t, pos
+
+            if throttled:
+                # If configured, we introduce a random amount of pause before retrieving
+                # the next page of Tweets.
+                # According to https://twitter.com/robots.txt, Twitter expects
+                # a 1s delay.
+                pause = round(random.uniform(1,1.5),2)
+                logger.info("Waiting {}s before next query.".format(pause))
+                time.sleep(pause)
 
             # use new_pos only once you have iterated through all old tweets
             pos = new_pos
@@ -231,6 +241,8 @@ def query_tweets(query, limit=None, begindate=dt.date(2006, 3, 21), enddate=dt.d
     else:
         limit_per_pool = None
 
+    # If we are setting pool size to 1, add a pause between requests to avoid IP ban by Twitter.
+    throttled = poolsize == 1 and not use_proxies
     queries = ['{} since:{} until:{}'.format(query, since, until)
                for since, until in zip(dateranges[:-1], dateranges[1:])]
 
@@ -239,7 +251,7 @@ def query_tweets(query, limit=None, begindate=dt.date(2006, 3, 21), enddate=dt.d
         pool = Pool(poolsize)
         logger.info('queries: {}'.format(queries))
         try:
-            for new_tweets in pool.imap_unordered(partial(query_tweets_once, limit=limit_per_pool, lang=lang, use_proxies=use_proxies), queries):
+            for new_tweets in pool.imap_unordered(partial(query_tweets_once, throttled = throttled, limit=limit_per_pool, lang=lang, use_proxies=use_proxies), queries):
                 all_tweets.extend(new_tweets)
                 logger.info('Got {} tweets ({} new).'.format(
                     len(all_tweets), len(new_tweets)))

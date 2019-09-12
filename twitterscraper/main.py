@@ -89,7 +89,7 @@ def main():
                             help="Scrape for tweets starting from this date. Format YYYY-MM-DD. \nDefault value is 2006-03-21", metavar='\b')
         parser.add_argument("-ed", "--enddate", type=valid_date, default=dt.date.today(),
                             help="Scrape for tweets until this date. Format YYYY-MM-DD. \nDefault value is the date of today.", metavar='\b')
-        parser.add_argument("-p", "--poolsize", type=int, default=20, help="Specify the number of parallel process you want to run. \n"
+        parser.add_argument("-p", "--poolsize", type=int, default=20, help="Specify the number of parallel process you want to run. If set to 1, the scraper will pause between requests to respect Twitter's limit on number of requests and try avoid being banned. \n"
                             "Default value is set to 20. \nYou can change this number if you have more computing power available. \n"
                             "Set to 1 if you dont want to run any parallel processes.", metavar='\b')
         args = parser.parse_args()
