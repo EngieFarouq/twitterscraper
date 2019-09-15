@@ -76,7 +76,7 @@ def linspace(start, stop, n):
 proxies = get_proxies()
 proxy_pool = cycle(proxies)
 
-def query_single_page(query, lang, pos, use_proxies, retry=50, from_user=False, timeout=(6.05,30)):
+def query_single_page(query, lang, pos, use_proxies = False, retry=50, from_user=False, timeout=(6.05,30)):
     """
     Returns tweets from the given URL.
 
@@ -124,7 +124,7 @@ def query_single_page(query, lang, pos, use_proxies, retry=50, from_user=False, 
                 pass
             if retry > 0:
                 logger.info('Retrying... (Attempts left: {})'.format(retry))
-                return query_single_page(query, lang, pos, retry - 1, from_user)
+                return query_single_page(query, lang, pos,use_proxies, retry - 1, from_user)
             else:
                 return [], pos
 
@@ -149,7 +149,7 @@ def query_single_page(query, lang, pos, use_proxies, retry=50, from_user=False, 
 
     if retry > 0:
         logger.info('Retrying... (Attempts left: {})'.format(retry))
-        return query_single_page(query, lang, pos, retry - 1)
+        return query_single_page(query, lang, pos, use_proxies, retry - 1)
 
     logger.error('Giving up.')
     return [], None
